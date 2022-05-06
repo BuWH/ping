@@ -1,23 +1,29 @@
 import { ActionPanel, Detail, List, Action, Form, useNavigation } from "@raycast/api";
+import { Toast, showToast } from "@raycast/api";
 import { useEffect, useState } from "react";
-import ping, { PingConfig } from "ping";
+import Ping from "ping";
 
 export default function Command() {
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [newAddress, setNewAddress] = useState<string>("");
+  const [items, setItems] = useState<string[]>(["baidu.com", "qq.com"]);
 
   useEffect(() => {
     console.log("show ping");
   }, []);
 
+  const createNewPing = async (address: string) => {
+    setItems([address, ...items]);
+  };
+
   return (
-    <List isLoading={isLoading}>
+    <List>
+      {items.map((e) => (
+        <PingCell key={e} address={e} />
+      ))}
       <List.Item
         title="Ping New"
-        subtitle={newAddress}
         actions={
           <ActionPanel title="Ping">
-            <Action.Push title="Create New Ping" target={NewPing(setNewAddress)} />
+            <Action.Push title="Create New Ping" target={NewPing(createNewPing)} />
           </ActionPanel>
         }
       />
@@ -33,6 +39,45 @@ export default function Command() {
   );
 }
 
+const PingCell = (props) => {
+  const { address } = props;
+  const [status, setStatus] = useState<string>("");
+  useEffect(() => {
+    console.log("ping " + address);
+    ping();
+  }, []);
+
+  const ping = async () => {
+    setStatus("pinging...");
+    Ping.promise.probe(address).then(async (res) => {
+      console.log(res);
+      const { alive, avg } = res;
+      if (alive) {
+        setStatus(avg.split(".")[0] + " ms");
+      } else {
+        const toast = await showToast({
+          title: "No response " + address,
+          style: Toast.Style.Failure,
+        });
+        setStatus("fail");
+      }
+    });
+  };
+
+  return (
+    <List.Item
+      key={address}
+      title={address}
+      subtitle={status}
+      actions={
+        <ActionPanel title="Ping">
+          <Action title="Ping" onAction={ping} />
+        </ActionPanel>
+      }
+    />
+  );
+};
+
 const NewPing = (createNewPing: (address: string) => void) => {
   const { pop } = useNavigation();
   return (
@@ -42,23 +87,15 @@ const NewPing = (createNewPing: (address: string) => void) => {
           <Action.SubmitForm
             title="Start Ping"
             onSubmit={(values) => {
-              const { address, port } = values;
-              const config = {
-                host: address + ":" + port,
-              } as PingConfig;
-              ping.promise.probe(address + ":" + port, config).then((res) => {
-                const isAlive = res.alive;
-                console.log(res);
-                createNewPing(isAlive ? "success" : "fail");
-              });
+              const { address } = values;
+              createNewPing(address);
               pop();
             }}
           />
         </ActionPanel>
       }
     >
-      <Form.TextField title="Address" id="address" defaultValue="Google.com" />
-      <Form.TextField title="Port" id="port" defaultValue="80" />
+      <Form.TextField title="Address" id="address" defaultValue="www.baidu.com" />
     </Form>
   );
 };

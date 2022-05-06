@@ -18,7 +18,8 @@
     }
   ],
   "dependencies": {
-    "@raycast/api": "^1.33.2"
+    "@raycast/api": "^1.33.2",
+    "ping": "^0.4.2"
   },
   "devDependencies": {
     "@types/node": "~16.10.0",
