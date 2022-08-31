@@ -1,3 +1,5 @@
 # ping
 
-use ping.pe to ping websites, ip addresses, ports.
+A raycast extension.
+
+Use ping.pe to ping websites, ip addresses, ports.
